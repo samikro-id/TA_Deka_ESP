@@ -6,20 +6,23 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 
 uint32_t current_time;
+uint32_t previous_time;
 uint32_t chart_time;
 uint32_t led_time;
 
 bool led_state = false;
 
-char payload_get[50];
+#define PAYLOAD_LEN  100
+char payload_get[PAYLOAD_LEN];
 bool mqtt = false;
 
-char text[100];
+#define SERIAL_LEN   1000
+char text[SERIAL_LEN];
 
 char ssid[] = "samikro";
 char pass[] = "samikroid";
 
-#define MQTT_BROKER     "broker.emqx.io"      //
+#define MQTT_BROKER     "broker.emqx.io"            //
 #define MQTT_PORT       1883                        //
 #define MQTT_USERNAME   ""                          // Change to your Username from Broker
 #define MQTT_PASSWORD   ""                          // Change to your password from Broker
@@ -28,7 +31,7 @@ char pass[] = "samikroid";
 #define MQTT_RETAIN    false
 
 #define MQTT2_BROKER     "mqtt.thingspeak.com"      //
-#define MQTT2_PORT       1883                        //
+#define MQTT2_PORT       1883                       //
 #define MQTT2_USERNAME   "dekaputra"                          // Change to your Username from Broker
 #define MQTT2_PASSWORD   "U3N5KWAK07VCDH7S"                          // Change to your password from Broker
 #define MQTT2_TIMEOUT    2
@@ -66,15 +69,13 @@ void setup(){
   WiFi.mode(WIFI_STA);                            delay(10);
   ESP.wdtFeed();                                  yield();
 
-  current_time = millis();
-  led_time = current_time;
+  led_time = millis();
 
   WiFi.begin(ssid, pass);
   while(WiFi.status() != WL_CONNECTED){
     yield();
 
-    current_time = millis();
-    if((current_time-led_time) > 1000){          // toggle led setiap detik
+    if((millis()-led_time) > 1000){          // toggle led setiap detik
       toggleLed();
     }
 
@@ -93,48 +94,55 @@ void setup(){
 void loop(){
   if(WiFi.status() == WL_CONNECTED){
 
-    if((current_time-chart_time) >= 60000){
+    if((millis()-chart_time) >= 60000){
       publishChart();
 
       chart_time = millis();
     }
 
     if(mqtt){
-      if(strstr(payload_get, "data")){
-        client.publish("samikro/data/project/1","{\"volt\":100,\"current\":50,\"energy\":20,\"status\":\"ON\"}",false);
-      }
-
-      if(strstr(payload_get, "control")){
-        if(strstr(payload_get, "ON")){
-
-        }
-        if(strstr(payload_get, "OFF")){
-          
-        }
-      }
-
       mqtt = false;
+      // if(strstr(payload_get, "data")){
+      //   client.publish("samikro/data/project/1","{\"volt\":100,\"current\":50,\"energy\":20,\"status\":\"ON\"}",false);
+      // }
+      
+      uint8_t n=0;
+      for(n=0; n<3; n++){
+        Serial.println(payload_get);
+        if(waitSerial()){
+          break;
+        }
+      }
+      
+      clearDataMqtt();
     }
   }
 
-  current_time = millis();        // update current time
   client.loop();
 }
 
 void publishChart(){
-  Serial.println("{\"operation\":\"data\"}");
+  bool chartIsConnected = false;
+  uint8_t n = 0;
 
   client.disconnect();
   client.setServer(MQTT2_BROKER, MQTT2_PORT);
 
-  uint8_t i;
-  for(i=0; i<MQTT2_TIMEOUT; i++){
+  for(n=0; n<MQTT2_TIMEOUT; n++){
 
     if(client.connect("7912c119-3a3c-4127-ac2e-440aadd3599a", MQTT2_USERNAME, MQTT2_PASSWORD)){
-      delay(500);
+      chartIsConnected = true;
 
-      client.publish("channels/1289348/publish/I8VQHYUWACAQX3IJ","field1=100&field2=50&field3=20&field4=10",false);
       break;
+    }
+  }
+
+  if(chartIsConnected){
+    for(n=0; n<3; n++){
+      Serial.println("{\"operation\":\"data\"}");
+      if(waitSerialChart()){
+        break;
+      }
     }
   }
 
@@ -163,30 +171,76 @@ bool connectMqtt(){
   return false;
 }
 
-void clearData(){
+void clearDataMqtt(){
   uint8_t n;
-  for(n=0; n<50; n++){
+  for(n=0; n<PAYLOAD_LEN; n++){
     payload_get[n] = 0;
   }
 }
 
+void clearDataSerial(){
+  uint8_t n;
+  for(n=0; n<SERIAL_LEN; n++){
+    text[n] = 0;
+  }
+}
+
 /***** Serial ******/
+bool waitSerialChart(){
+  float field1=0;
+  float field2=0;
+  uint8_t field3=0;
+  bool onOff = false;
+  StaticJsonBuffer<SERIAL_LEN> JSONBUffer;
+
+  if(waitSerial()){
+    JsonObject& root = JSONBuffer.parseObject(text);
+    if(root.success()){
+      field1 = root["tegangan"];
+      field2 = root["arus"];
+      field3 = root["energy"];
+      onOff = root["on"];
+
+      clearDataSerial();
+      sprintf(text,"field1=%.1f&field2=%.2f&field3=%d&field4=%d", field1, field2, field3, onOff);
+      client.publish("channels/1289348/publish/I8VQHYUWACAQX3IJ",text,false);
+      clearDataSerial();
+      return true;
+    }
+  }
+  return false;
+}
+
+bool waitSerialApp(){
+  if(waitSerial()){
+    client.publish("samikro/data/project/1", text,false);
+    clearDataSerial();
+    return true;
+  }
+  return false;
+}
 
 bool waitSerial(){
+  uint16_t n = 0;
+  bool hasData = false;
+
+  clearDataSerial();
 
   previous_time = millis();
   do{
       if(Serial.available() > 0){
           break;
       }
-  }while((millis() - previous_time) <= 10);
+  }while((millis() - previous_time) <= 500);
 
-  n = 0;
   while(Serial.available() > 0){
       byte d = (char) pzemSerial.read();
-      recv[n] = d;
+      text[n] = d;
       n++;
+      hasData = true;
   }
+
+  return hasData;
 }
 
 /***** LED Setting *****/
@@ -208,11 +262,8 @@ void toggleLed(){
 }
 
 void setLed(bool state){
-  if(state){
-    digitalWrite(LED_BUILTIN, LOW);     // nyalakan LED
-  }else{
-    digitalWrite(LED_BUILTIN, HIGH);    // matikan LED
-  }
+  if(state){    digitalWrite(LED_BUILTIN, LOW);     }// nyalakan LED
+  else{    digitalWrite(LED_BUILTIN, HIGH);    }// matikan LED
 
   led_state = state;
 }
