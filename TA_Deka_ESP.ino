@@ -19,8 +19,12 @@ bool mqtt = false;
 #define SERIAL_LEN   1000
 char text[SERIAL_LEN];
 
-char ssid[] = "samikro";
-char pass[] = "samikroid";
+char ssid[] = "OFFICE";
+char pass[] = "seipandaan";
+
+#define CHART_DELAY     10000
+
+#define MQTT_ID         "7912c119-3a3c-4127-ac2e-440aadd3599a"
 
 #define MQTT_BROKER     "broker.emqx.io"            //
 #define MQTT_PORT       1883                        //
@@ -42,9 +46,6 @@ void callback(char* topic, byte* payload, unsigned int length) { //A new message
   memcpy(payload_get, payload, length);
   mqtt = true;
 }
-
-float tegangan, arus, energy;
-bool relay;
 
 /*
  *  enum rst_info->reason {
@@ -88,13 +89,20 @@ void setup(){
     connectMqtt();
   }
 
-  chart_time = millis() + 10000;
+  chart_time = millis() + CHART_DELAY;
+  led_time = millis();
 }
 
 void loop(){
   if(WiFi.status() == WL_CONNECTED){
 
-    if((millis()-chart_time) >= 10000){
+    if((millis() - led_time) > 200){
+      toggleLed();
+
+      led_time = millis();
+    }
+
+    if((millis()-chart_time) >= CHART_DELAY){
       publishChart();
 
       chart_time = millis();
@@ -127,7 +135,7 @@ void publishChart(){
 
   for(n=0; n<MQTT2_TIMEOUT; n++){
 
-    if(client.connect("7912c119-3a3c-4127-ac2e-440aadd3599a", MQTT2_USERNAME, MQTT2_PASSWORD)){
+    if(client.connect(MQTT_ID, MQTT2_USERNAME, MQTT2_PASSWORD)){
       chartIsConnected = true;
 
       break;
@@ -155,7 +163,7 @@ bool connectMqtt(){
   uint8_t i;
   for(i = 0; i < MQTT_TIMEOUT; i++) {
       
-    if( client.connect("7912c119-3a3c-4127-ac2e-440aadd3599a", MQTT_USERNAME, MQTT_PASSWORD) ){
+    if( client.connect(MQTT_ID, MQTT_USERNAME, MQTT_PASSWORD) ){
       delay(500);
       if(client.subscribe("samikro/cmd/project/1", MQTT_QOS)){
         return true;
@@ -225,18 +233,18 @@ bool waitSerial(){
 
   previous_time = millis();
   do{
-      if(Serial.available() > 0){
-        delay(100);
-        break;
-      }
+    if(Serial.available() > 0){
+      delay(100);
+      break;
+    }
   }while((millis() - previous_time) <= 500);
 
   while(Serial.available() > 0){
-      byte d = (char) Serial.read();
-      text[n] = d;
-      n++;
-      hasData = true;
-      delay(10);
+    byte d = (char) Serial.read();
+    text[n] = d;
+    n++;
+    hasData = true;
+    delay(10);
   }
 
   return hasData;
