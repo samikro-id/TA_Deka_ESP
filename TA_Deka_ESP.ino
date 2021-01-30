@@ -61,7 +61,7 @@ rst_info *myResetInfo;
 
 void setup(){
   delay(300);
-  Serial.begin(2400);
+  Serial.begin(9600);
 
   initLed();
 
@@ -88,13 +88,13 @@ void setup(){
     connectMqtt();
   }
 
-  chart_time = millis() + 60000;
+  chart_time = millis() + 10000;
 }
 
 void loop(){
   if(WiFi.status() == WL_CONNECTED){
 
-    if((millis()-chart_time) >= 60000){
+    if((millis()-chart_time) >= 10000){
       publishChart();
 
       chart_time = millis();
@@ -102,14 +102,11 @@ void loop(){
 
     if(mqtt){
       mqtt = false;
-      // if(strstr(payload_get, "data")){
-      //   client.publish("samikro/data/project/1","{\"volt\":100,\"current\":50,\"energy\":20,\"status\":\"ON\"}",false);
-      // }
       
       uint8_t n=0;
       for(n=0; n<3; n++){
         Serial.println(payload_get);
-        if(waitSerial()){
+        if(waitSerialApp()){
           break;
         }
       }
@@ -138,8 +135,8 @@ void publishChart(){
   }
 
   if(chartIsConnected){
-    for(n=0; n<3; n++){
-      Serial.println("{\"operation\":\"data\"}");
+    for(n=0; n<1; n++){
+      Serial.println("{\"op\":\"data\"}");
       if(waitSerialChart()){
         break;
       }
@@ -179,7 +176,7 @@ void clearDataMqtt(){
 }
 
 void clearDataSerial(){
-  uint8_t n;
+  uint16_t n;
   for(n=0; n<SERIAL_LEN; n++){
     text[n] = 0;
   }
@@ -191,7 +188,7 @@ bool waitSerialChart(){
   float field2=0;
   uint8_t field3=0;
   bool onOff = false;
-  StaticJsonBuffer<SERIAL_LEN> JSONBUffer;
+  StaticJsonBuffer<SERIAL_LEN> JSONBuffer;
 
   if(waitSerial()){
     JsonObject& root = JSONBuffer.parseObject(text);
@@ -229,15 +226,17 @@ bool waitSerial(){
   previous_time = millis();
   do{
       if(Serial.available() > 0){
-          break;
+        delay(100);
+        break;
       }
   }while((millis() - previous_time) <= 500);
 
   while(Serial.available() > 0){
-      byte d = (char) pzemSerial.read();
+      byte d = (char) Serial.read();
       text[n] = d;
       n++;
       hasData = true;
+      delay(10);
   }
 
   return hasData;
