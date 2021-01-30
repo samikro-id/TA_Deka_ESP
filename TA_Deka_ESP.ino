@@ -19,10 +19,10 @@ bool mqtt = false;
 #define SERIAL_LEN   1000
 char text[SERIAL_LEN];
 
-char ssid[] = "OFFICE";
-char pass[] = "seipandaan";
+char ssid[] = "samikro";
+char pass[] = "samikroid";
 
-#define CHART_DELAY     10000
+#define CHART_DELAY     300000      // 300000 = 5 menit
 
 #define MQTT_ID         "7912c119-3a3c-4127-ac2e-440aadd3599a"
 
@@ -144,7 +144,7 @@ void publishChart(){
 
   if(chartIsConnected){
     for(n=0; n<1; n++){
-      Serial.println("{\"op\":\"data\"}");
+      Serial.println("{\"op\":\"data\",\"cmd\":\"get\"}");
       if(waitSerialChart()){
         break;
       }
@@ -204,7 +204,12 @@ bool waitSerialChart(){
       field1 = root["tegangan"];
       field2 = root["arus"];
       field3 = root["energy"];
-      onOff = root["on"];
+      const char * state = root["state"];
+      if(strcmp(state, "ON") == 0){
+        onOff = true;
+      }else{
+        onOff = false;
+      }
 
       clearDataSerial();
       sprintf(text,"field1=%.1f&field2=%.2f&field3=%d&field4=%d", field1, field2, field3, onOff);
