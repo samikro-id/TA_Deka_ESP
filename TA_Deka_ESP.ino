@@ -19,8 +19,8 @@ bool mqtt = false;
 #define SERIAL_LEN   1000
 char text[SERIAL_LEN];
 
-char ssid[] = "OFFICE";
-char pass[] = "seipandaan";
+char ssid[] = "samikro";
+char pass[] = "samikroid";
 
 #define CHART_DELAY     300000      // 300000 = 5 menit
 
