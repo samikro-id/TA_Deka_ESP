@@ -9,7 +9,8 @@
                 "C:\\Users\\RND6-PC\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\2.6.3\\**",
                 "C:\\Users\\SYAFIUL\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\2.6.3\\**",
                 "C:\\Users\\SYAFIUL\\AppData\\Local\\Arduino15\\packages\\esp8266\\tools\\**",
-                "C:\\Users\\SYAFIUL\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\2.7.1\\**"
+                "C:\\Users\\SYAFIUL\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\2.7.1\\**",
+                "C:\\Users\\RND6-PC\\Documents\\Arduino\\libraries\\**"
             ],
             "forcedInclude": [],
             "intelliSenseMode": "msvc-x64",

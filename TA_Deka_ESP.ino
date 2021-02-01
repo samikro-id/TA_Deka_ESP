@@ -19,8 +19,8 @@ bool mqtt = false;
 #define SERIAL_LEN   1000
 char text[SERIAL_LEN];
 
-char ssid[] = "samikro";
-char pass[] = "samikroid";
+char ssid[] = "OFFICE";
+char pass[] = "seipandaan";
 
 #define CHART_DELAY     300000      // 300000 = 5 menit
 
@@ -143,7 +143,7 @@ void publishChart(){
   }
 
   if(chartIsConnected){
-    for(n=0; n<1; n++){
+    for(n=0; n<3; n++){
       Serial.println("{\"op\":\"data\",\"cmd\":\"get\"}");
       if(waitSerialChart()){
         break;
@@ -239,7 +239,7 @@ bool waitSerial(){
   previous_time = millis();
   do{
     if(Serial.available() > 0){
-      delay(100);
+      delay(10);
       break;
     }
   }while((millis() - previous_time) <= 500);
@@ -249,7 +249,7 @@ bool waitSerial(){
     text[n] = d;
     n++;
     hasData = true;
-    delay(10);
+    delay(1);
   }
 
   return hasData;
