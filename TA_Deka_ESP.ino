@@ -19,8 +19,8 @@ bool mqtt = false;
 #define SERIAL_LEN   1000
 char text[SERIAL_LEN];
 
-char ssid[] = "samikro";
-char pass[] = "samikroid";
+char ssid[] = "Dk";
+char pass[] = "DK230416";
 
 #define CHART_DELAY     300000      // 300000 = 5 menit
 
@@ -36,8 +36,8 @@ char pass[] = "samikroid";
 
 #define MQTT2_BROKER     "mqtt.thingspeak.com"      //
 #define MQTT2_PORT       1883                       //
-#define MQTT2_USERNAME   "dekaputra"                          // Change to your Username from Broker
-#define MQTT2_PASSWORD   "U3N5KWAK07VCDH7S"                          // Change to your password from Broker
+#define MQTT2_USERNAME   "dekaputra"                // Change to your Username from Broker
+#define MQTT2_PASSWORD   "U3N5KWAK07VCDH7S"         // Change to your password from Broker
 #define MQTT2_TIMEOUT    2
 #define MQTT2_QOS        0
 #define MQTT2_RETAIN     false
